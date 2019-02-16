@@ -163,6 +163,11 @@ inline void put(int i, int j, char c) {
 
 inline char get(int i, int j) { return in(i, j) ? X[i][j] : 0; }
 
+inline bool IN(int i, int j) {
+  char c = get(i, j);
+  return 0 < c && c < EMP;
+}
+
 void put(int i, int j, bool h, Word& w) {
   int s = w.s;
   assert(s > 2);
@@ -189,30 +194,23 @@ bool can(int i, int j, bool h, Word& w) {
   assert(s > 2);
   if (h) {
     if (j + s > W) return false;
-    if (get(i, j - 1)) return false;
-    if (get(i, j + s)) return false;
+    if (IN(i, j - 1)) return false;
+    if (IN(i, j + s)) return false;
     for (int k = 0; k < s; ++k) {
       char c = X[i][j + k];
       if (c && c != w.c[k]) return false;
-      if (get(i - 1, j + k) && (get(i - 1, j + k - 1) || get(i - 1, j + k + 1)))
-        return false;
-      if (get(i + 1, j + k) && (get(i + 1, j + k - 1) || get(i + 1, j + k + 1)))
-        return false;
+      if (k && IN(i - 1, j + k) && IN(i - 1, j + k - 1)) return false;
+      if (k && IN(i + 1, j + k) && IN(i + 1, j + k - 1)) return false;
     }
   } else {
     if (j + s > H) return false;
-    if (get(i - 1, j)) return false;
-    if (get(i + s, j)) return false;
+    if (IN(i - 1, j)) return false;
+    if (IN(i + s, j)) return false;
     for (int k = 0; k < s; ++k) {
       char c = X[i + k][j];
       if (c && c != w.c[k]) return false;
-      int a = get(i + k, j - 1) ? 1 : 0;
-      int b = get(i + k, j + 1) ? 1 : 0;
-      if ((a + b) & 1) return false;
-      if (get(i + k, j - 1) && (get(i + k - 1, j - 1) || get(i + k - 1, j - 1)))
-        return false;
-      if (get(i + k, j + 1) && (get(i + k + 1, j + 1) || get(i + k + 1, j + 1)))
-        return false;
+      if (k && IN(i + k, j - 1) && IN(i + k - 1, j - 1)) return false;
+      if (k && IN(i + k, j + 1) && IN(i + k - 1, j + 1)) return false;
     }
   }
   return true;
@@ -229,6 +227,8 @@ string toBit(ll x) {
   for (int i = 0; i < 64; ++i) s[i] = (x >> i) & 1;
   return s;
 }
+
+char toChar(char c) { return c ? c + 'A' - 1 : ' '; }
 
 void solve(bool rev) {
   if (rev) reverse();
@@ -271,7 +271,7 @@ void solve(bool rev) {
         q = (q & ~(((1LL << 5) - 1) << i5)) | (ll(X[h][w + i]) << i5);
         if (X[h][w + i]) m |= ((1LL << 5) - 1) << i5;
       }
-      for (int i = 0; i < (int)words.size(); ++i) {
+      for (int i = 0; i < S; ++i) {
         Word& t = words[i];
         if (t.used) continue;
         if (w + t.s <= W && can(q, m, t)) {

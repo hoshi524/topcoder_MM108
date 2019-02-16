@@ -7,3 +7,4 @@ images/*
 inputs/*
 result/*
 *.db
+err
