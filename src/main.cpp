@@ -199,8 +199,7 @@ bool can(int i, int j, bool h, Word& w) {
     for (int k = 0; k < s; ++k) {
       char c = X[i][j + k];
       if (c && c != w.c[k]) return false;
-      if (k && IN(i - 1, j + k) && IN(i - 1, j + k - 1)) return false;
-      if (k && IN(i + 1, j + k) && IN(i + 1, j + k - 1)) return false;
+      if (c == 0 && (IN(i - 1, j + k) || IN(i + 1, j + k))) return false;
     }
   } else {
     if (j + s > H) return false;
@@ -209,8 +208,7 @@ bool can(int i, int j, bool h, Word& w) {
     for (int k = 0; k < s; ++k) {
       char c = X[i + k][j];
       if (c && c != w.c[k]) return false;
-      if (k && IN(i + k, j - 1) && IN(i + k - 1, j - 1)) return false;
-      if (k && IN(i + k, j + 1) && IN(i + k - 1, j + 1)) return false;
+      if (c == 0 && (IN(i + k, j - 1) || IN(i + k, j + 1))) return false;
     }
   }
   return true;
@@ -262,7 +260,7 @@ void solve(bool rev) {
   vector<t4> e;
   for (int h = 0; h < H; ++h) {
     for (int w = 0; w + 2 < W; ++w) {
-      if (w > 0 && X[h][w - 1]) continue;
+      if (IN(h, w - 1)) continue;
       ll q = -1;
       ll m = 0;
       for (int i = 0; i < 12; ++i) {
@@ -290,6 +288,22 @@ void solve(bool rev) {
       put(h, w, true, words[i]);
     }
   }
+  if (false) {
+    for (int i = 0; i < H; ++i) {
+      for (int j = 0; j < W; ++j) {
+        cerr << toChar(X[i][j]);
+      }
+      cerr << endl;
+    }
+    debug(S);
+    for (Word w : words) {
+      if (w.used) continue;
+      for (int i = 0; i < w.s; ++i) {
+        cerr << toChar(w.c[i]);
+      }
+      cerr << endl;
+    }
+  }
 
   if (rev) reverse();
   if (bestScore < score) {
@@ -315,6 +329,7 @@ class CrosswordPuzzler {
     {  // solve
       solve(false);
       solve(true);
+      assert(score > 0);
     }
     {  // output
       vector<string> ret;

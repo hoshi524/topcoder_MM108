@@ -56,7 +56,7 @@ class CrosswordPuzzler {
     }
 
     public void addFatalError(String s) {
-        System.err.println(s);
+        System.err.println(seed + " : " + s);
     }
 
     public String[] createPuzzle(int width, int height, String[] dict) {
