@@ -1,0 +1,9 @@
+.idea/*
+out/*
+.vscode/*
+*.iml
+*.json
+images/*
+inputs/*
+result/*
+*.db
