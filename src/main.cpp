@@ -121,14 +121,16 @@ int scores[13] = {
     89,  // 11
     144  // 12
 };
+int C[SIZE][SIZE];
 char X[SIZE][SIZE];
 char result[SIZE][SIZE];
 
 struct Word {
-  int s;
+  int s, h = -1, w = -1;
   char c[12];
   ll hash = 0;
   bool used = false;
+  bool d;
 
   Word(string x) {
     s = x.size();
@@ -158,7 +160,16 @@ inline bool in(int i, int j) {
 }
 
 inline void put(int i, int j, char c) {
-  if (in(i, j)) X[i][j] = c;
+  if (in(i, j)) {
+    C[i][j]++;
+    X[i][j] = c;
+  }
+}
+
+inline void remove(int i, int j) {
+  if (in(i, j) && --C[i][j] == 0) {
+    X[i][j] = 0;
+  }
 }
 
 inline char get(int i, int j) { return in(i, j) ? X[i][j] : 0; }
@@ -171,7 +182,11 @@ inline bool IN(int i, int j) {
 void put(int i, int j, bool h, Word& w) {
   int s = w.s;
   assert(s > 2);
+  assert(!w.used);
   w.used = true;
+  w.h = i;
+  w.w = j;
+  w.d = h;
   score += scores[s];
   if (h) {
     put(i, j - 1, EMP);
@@ -184,6 +199,28 @@ void put(int i, int j, bool h, Word& w) {
     put(i + s, j, EMP);
     for (int k = 0; k < s; ++k) {
       put(i + k, j, w.c[k]);
+    }
+  }
+}
+
+void remove(Word& w) {
+  assert(w.used);
+  w.used = false;
+  int i = w.h;
+  int j = w.w;
+  int s = w.s;
+  score -= scores[s];
+  if (w.d) {
+    remove(i, j - 1);
+    remove(i, j + s);
+    for (int k = 0; k < s; ++k) {
+      remove(i, j + k);
+    }
+  } else {
+    remove(i - 1, j);
+    remove(i + s, j);
+    for (int k = 0; k < s; ++k) {
+      remove(i + k, j);
     }
   }
 }
@@ -202,7 +239,7 @@ bool can(int i, int j, bool h, Word& w) {
       if (c == 0 && (IN(i - 1, j + k) || IN(i + 1, j + k))) return false;
     }
   } else {
-    if (j + s > H) return false;
+    if (i + s > H) return false;
     if (IN(i - 1, j)) return false;
     if (IN(i + s, j)) return false;
     for (int k = 0; k < s; ++k) {
@@ -228,37 +265,25 @@ string toBit(ll x) {
 
 char toChar(char c) { return c ? c + 'A' - 1 : ' '; }
 
-void solve(bool rev) {
-  if (rev) reverse();
-  memset(X, 0, sizeof(X));
-  score = 0;
-  for (auto& t : words) t.used = false;
-
-  int under[SIZE];
-  memset(under, 0, sizeof(under));
-  for (int i = 0, ok = 1; ok; ++i) {
-    ok = 0;
-    auto f = [&](int w) {
-      int h = max(under[w], under[w + 2]);
-      if (h == H) return;
-      for (Word& t : words) {
-        int s = h + t.s;
-        if (t.used || H < s) continue;
-        ok = 1;
-        put(h, w, false, t);
-        under[w + 1] = s;
-        break;
+void solve(int minh, int maxh) {
+  for (Word& t : words) {
+    if (t.used && minh <= t.h && t.h < maxh) remove(t);
+  }
+  if (minh + 6 < maxh) {
+    for (int w = 0; w < W; ++w) {
+      for (int i = 0; i < S; ++i) {
+        Word& t = words[i];
+        int s = minh + t.s;
+        if (s <= maxh && can(minh, w, false, t)) {
+          put(minh, w, false, t);
+          break;
+        }
       }
-    };
-    if (i & 1) {
-      for (int w = W - 1 - (W & 1); w >= 0; w -= 2) f(w);
-    } else {
-      for (int w = 0; w < W; w += 2) f(w);
     }
   }
   using t4 = tuple<int, int, int, int>;
   vector<t4> e;
-  for (int h = 0; h < H; ++h) {
+  for (int h = minh; h < maxh - (maxh < H ? 1 : 0); ++h) {
     for (int w = 0; w + 2 < W; ++w) {
       if (IN(h, w - 1)) continue;
       ll q = -1;
@@ -288,6 +313,25 @@ void solve(bool rev) {
       put(h, w, true, words[i]);
     }
   }
+}
+
+void solve(bool rev) {
+  if (rev) reverse();
+  score = 0;
+  memset(X, 0, sizeof(X));
+  memset(C, 0, sizeof(C));
+  for (auto& t : words) t.used = false;
+
+  for (int h = 0; h < H;) {
+    for (int i = 0; i < S; ++i) {
+      Word& t = words[i];
+      if (!t.used) {
+        solve(h, min(h + t.s, H));
+        h += t.s;
+        break;
+      }
+    }
+  }
   if (false) {
     for (int i = 0; i < H; ++i) {
       for (int j = 0; j < W; ++j) {
@@ -295,14 +339,14 @@ void solve(bool rev) {
       }
       cerr << endl;
     }
-    debug(S);
-    for (Word w : words) {
-      if (w.used) continue;
-      for (int i = 0; i < w.s; ++i) {
-        cerr << toChar(w.c[i]);
-      }
-      cerr << endl;
-    }
+    debug(score);
+    // for (Word w : words) {
+    //   if (w.used) continue;
+    //   for (int i = 0; i < w.s; ++i) {
+    //     cerr << toChar(w.c[i]);
+    //   }
+    //   cerr << endl;
+    // }
   }
 
   if (rev) reverse();
