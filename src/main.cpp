@@ -102,10 +102,9 @@ constexpr double TIME_LIMIT = 1.0;
 constexpr double TIME_LIMIT = 9.8;
 #endif
 constexpr int SIZE = 55;
+constexpr int SS = SIZE * SIZE;
 constexpr char EMP = 0x1f;
 int W, H, S;
-int score = 0;
-int bestScore = 0;
 int scores[13] = {
     0,   // 0
     1,   // 1
@@ -121,24 +120,22 @@ int scores[13] = {
     89,  // 11
     144  // 12
 };
-int C[SIZE][SIZE];
+uint8_t C[SIZE][SIZE];
 char X[SIZE][SIZE];
 char result[SIZE][SIZE];
 
-struct Word {
-  int s, h = -1, w = -1;
-  char c[12];
-  ll hash = 0;
-  bool used = false;
-  bool d;
+int score = 0;
+int bestScore = 0;
+int WS[SS], WH[SS], WW[SS];
+char WC[SS][12];
+ll HASH[SS];
+bool WD[SS];
 
-  Word(string x) {
-    s = x.size();
-    for (int i = 0; i < s; ++i) {
-      c[i] = x[i] - 'A' + 1;
-      hash |= ll(c[i]) << (i * 5);
-    }
-  }
+struct Word {
+  int id;
+  bool used = false;
+
+  Word(int id) : id(id) {}
 };
 vector<Word> words;
 
@@ -180,25 +177,25 @@ inline bool IN(int i, int j) {
 }
 
 void put(int i, int j, bool h, Word& w) {
-  int s = w.s;
-  assert(s > 2);
   assert(!w.used);
   w.used = true;
-  w.h = i;
-  w.w = j;
-  w.d = h;
+  int id = w.id;
+  int s = WS[id];
+  WH[id] = i;
+  WW[id] = j;
+  WD[id] = h;
   score += scores[s];
   if (h) {
     put(i, j - 1, EMP);
     put(i, j + s, EMP);
     for (int k = 0; k < s; ++k) {
-      put(i, j + k, w.c[k]);
+      put(i, j + k, WC[id][k]);
     }
   } else {
     put(i - 1, j, EMP);
     put(i + s, j, EMP);
     for (int k = 0; k < s; ++k) {
-      put(i + k, j, w.c[k]);
+      put(i + k, j, WC[id][k]);
     }
   }
 }
@@ -206,11 +203,12 @@ void put(int i, int j, bool h, Word& w) {
 void remove(Word& w) {
   assert(w.used);
   w.used = false;
-  int i = w.h;
-  int j = w.w;
-  int s = w.s;
+  int id = w.id;
+  int s = WS[id];
+  int i = WH[id];
+  int j = WW[id];
   score -= scores[s];
-  if (w.d) {
+  if (WD[id]) {
     remove(i, j - 1);
     remove(i, j + s);
     for (int k = 0; k < s; ++k) {
@@ -227,7 +225,8 @@ void remove(Word& w) {
 
 bool can(int i, int j, bool h, Word& w) {
   if (w.used) return false;
-  int s = w.s;
+  int id = w.id;
+  int s = WS[id];
   assert(s > 2);
   if (h) {
     if (j + s > W) return false;
@@ -235,7 +234,7 @@ bool can(int i, int j, bool h, Word& w) {
     if (IN(i, j + s)) return false;
     for (int k = 0; k < s; ++k) {
       char c = X[i][j + k];
-      if (c && c != w.c[k]) return false;
+      if (c && c != WC[id][k]) return false;
       if (c == 0 && (IN(i - 1, j + k) || IN(i + 1, j + k))) return false;
     }
   } else {
@@ -244,7 +243,7 @@ bool can(int i, int j, bool h, Word& w) {
     if (IN(i + s, j)) return false;
     for (int k = 0; k < s; ++k) {
       char c = X[i + k][j];
-      if (c && c != w.c[k]) return false;
+      if (c && c != WC[id][k]) return false;
       if (c == 0 && (IN(i + k, j - 1) || IN(i + k, j + 1))) return false;
     }
   }
@@ -252,8 +251,10 @@ bool can(int i, int j, bool h, Word& w) {
 }
 
 inline bool can(ll h, ll m, Word& w) {
-  ll x = h ^ (w.hash & m);
-  if (w.s < 12) x &= (1LL << ((w.s + 1) * 5)) - 1;
+  int id = w.id;
+  int s = WS[id];
+  ll x = h ^ (HASH[id] & m);
+  if (s < 12) x &= (1LL << ((s + 1) * 5)) - 1;
   return x == 0;
 }
 
@@ -267,13 +268,14 @@ char toChar(char c) { return c ? c + 'A' - 1 : ' '; }
 
 void solve(int minh, int maxh) {
   for (Word& t : words) {
-    if (t.used && minh <= t.h && t.h < maxh) remove(t);
+    int id = t.id;
+    if (t.used && minh <= WH[id] && WH[id] < maxh) remove(t);
   }
   if (minh + 6 < maxh) {
     for (int w = 0; w < W; ++w) {
       for (int i = 0; i < S; ++i) {
         Word& t = words[i];
-        int s = minh + t.s;
+        int s = minh + WS[t.id];
         if (s <= maxh && can(minh, w, false, t)) {
           put(minh, w, false, t);
           break;
@@ -297,8 +299,8 @@ void solve(int minh, int maxh) {
       for (int i = 0; i < S; ++i) {
         Word& t = words[i];
         if (t.used) continue;
-        if (w + t.s <= W && can(q, m, t)) {
-          e.emplace_back(t.s, h, w, i);
+        if (w + WS[t.id] <= W && can(q, m, t)) {
+          e.emplace_back(WS[t.id], h, w, i);
         }
       }
     }
@@ -326,8 +328,8 @@ void solve(bool rev) {
     for (int i = 0; i < S; ++i) {
       Word& t = words[i];
       if (!t.used) {
-        solve(h, min(h + t.s, H));
-        h += t.s;
+        solve(h, min(h + WS[t.id], H));
+        h += WS[t.id];
         break;
       }
     }
@@ -365,10 +367,15 @@ class CrosswordPuzzler {
       ::H = H;
       ::S = dict.size();
       for (int i = 0; i < S; ++i) {
-        words.emplace_back(Word(dict[i]));
+        words.emplace_back(Word(i));
+        WS[i] = dict[i].size();
+        for (int j = 0; j < WS[i]; ++j) {
+          WC[i][j] = dict[i][j] - 'A' + 1;
+          HASH[i] |= ll(WC[i][j]) << (j * 5);
+        }
       }
       sort(words.begin(), words.end(),
-           [](const Word& a, const Word& b) { return a.s > b.s; });
+           [](const Word& a, const Word& b) { return WS[a.id] > WS[b.id]; });
     }
     {  // solve
       solve(false);
