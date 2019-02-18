@@ -347,13 +347,15 @@ void solve(bool rev) {
   Timer timer;
   if (rev) cur.reverse();
   cur.init();
-  while (timer.getElapsed() * 2 < TIME_LIMIT) {
+  while (true) {
+    double remain = 1.0 - 2 * timer.getElapsed() / TIME_LIMIT;
+    if (remain < 0) break;
     cur.words_shuffle();
     for (int h = 0; h + 5 < H; h += 5) {
       for (int w = 0; w + 5 < W; w += 5) {
         State tmp = cur;
         tmp.solve(h, w);
-        if (cur.score <= tmp.score) cur = tmp;
+        if (tmp.score - cur.score > remain * get_random_log()) cur = tmp;
       }
     }
   }
