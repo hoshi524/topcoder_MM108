@@ -99,7 +99,7 @@ using ll = long long;
 #if defined(LOCAL)
 constexpr double TIME_LIMIT = 2;
 #else
-constexpr double TIME_LIMIT = 9;
+constexpr double TIME_LIMIT = 9.5;
 #endif
 constexpr int SIZE = 55;
 constexpr int SS = SIZE * SIZE;
@@ -285,7 +285,7 @@ struct State {
       v[i] = WS[i] * 100 + get_random(100);
     }
     sort(words.begin(), words.end(),
-         [&](Word& a, Word& b) { return v[a.id] > v[b.id]; });
+         [&](const Word& a, const Word& b) { return v[a.id] > v[b.id]; });
   }
 
   inline void solve(int minh, int minw) {
