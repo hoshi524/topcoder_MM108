@@ -278,7 +278,7 @@ struct State {
     if (rev) reverse();
     int v[SS];
     State tmp;
-    for (int t = 0; t < 100; ++t) {
+    for (int t = 0; t < 50; ++t) {
       init();
       for (int i = 0; i < S; ++i) {
         v[i] = WS[i] * 100 + get_random(100);
@@ -293,6 +293,10 @@ struct State {
                 put(i, j, false, t);
                 return;
               }
+            }
+          }
+          for (int i = 0; i < H; ++i) {
+            for (int j = 0; j < W; ++j) {
               if (can(i, j, true, t)) {
                 put(i, j, true, t);
                 return;
