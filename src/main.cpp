@@ -296,6 +296,7 @@ struct State {
         remove(t);
     }
     for (Word& t : words) {
+      if (t.used) continue;
       [&]() {
         for (int i = minh; i < maxh; ++i) {
           for (int j = minw; j < maxw; ++j) {
