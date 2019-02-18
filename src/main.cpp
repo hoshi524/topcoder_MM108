@@ -97,9 +97,9 @@ inline double get_random_log() { return log(get_random_double()); }
 
 using ll = long long;
 #if defined(LOCAL)
-constexpr double TIME_LIMIT = 1.0;
+constexpr double TIME_LIMIT = 2;
 #else
-constexpr double TIME_LIMIT = 9.8;
+constexpr double TIME_LIMIT = 9;
 #endif
 constexpr int SIZE = 55;
 constexpr int SS = SIZE * SIZE;
@@ -182,7 +182,6 @@ struct State {
     if (in(i, j) && --C[i][j] == 0) {
       X[i][j] = 0;
     }
-    assert(C[i][j] >= 0);
   }
 
   inline char getC(int i, int j) { return in(i, j) ? X[i][j] : 0; }
@@ -194,13 +193,11 @@ struct State {
 
   void put(int i, int j, bool h, Word& w) {
     assert(!w.used);
-    w.used = true;
     int id = w.id;
     int s = WS[id];
     w.h = i;
     w.w = j;
     w.d = h;
-    score += scores[s];
     if (h) {
       put(i, j - 1, EMP);
       put(i, j + s, EMP);
@@ -214,29 +211,37 @@ struct State {
         put(i + k, j, WC[id][k]);
       }
     }
+    score += scores[s];
+    w.used = true;
   }
 
   void remove(Word& w) {
     assert(w.used);
-    w.used = false;
     int id = w.id;
     int s = WS[id];
     int i = w.h;
     int j = w.w;
-    score -= scores[s];
     if (w.d) {
+      for (int k = 0; k + 1 < s; ++k) {
+        if (C[i][j + k] == 2 && C[i][j + k + 1] == 2) return;
+      }
       remove(i, j - 1);
       remove(i, j + s);
       for (int k = 0; k < s; ++k) {
         remove(i, j + k);
       }
     } else {
+      for (int k = 0; k + 1 < s; ++k) {
+        if (C[i + k][j] == 2 && C[i + k + 1][j] == 2) return;
+      }
       remove(i - 1, j);
       remove(i + s, j);
       for (int k = 0; k < s; ++k) {
         remove(i + k, j);
       }
     }
+    score -= scores[s];
+    w.used = false;
   }
 
   bool can(int i, int j, bool h, Word& w) {
@@ -274,44 +279,49 @@ struct State {
     return x == 0;
   }
 
-  void solve(bool rev) {
-    if (rev) reverse();
-    int v[SS];
-    State tmp;
-    for (int t = 0; t < 50; ++t) {
-      init();
-      for (int i = 0; i < S; ++i) {
-        v[i] = WS[i] * 100 + get_random(100);
-      }
-      sort(words.begin(), words.end(),
-           [&](const Word& a, const Word& b) { return v[a.id] > v[b.id]; });
-      for (Word& t : words) {
-        [&]() {
-          for (int i = 0; i < H; ++i) {
-            for (int j = 0; j < W; ++j) {
-              if (can(i, j, false, t)) {
-                put(i, j, false, t);
-                return;
-              }
-            }
-          }
-          for (int i = 0; i < H; ++i) {
-            for (int j = 0; j < W; ++j) {
-              if (can(i, j, true, t)) {
-                put(i, j, true, t);
-                return;
-              }
-            }
-          }
-        }();
-      }
-      if (bestScore < score) {
-        bestScore = score;
-        memcpy(result, X, sizeof(X));
-      }
+  inline void words_shuffle() {
+    static int v[SS];
+    for (int i = 0; i < S; ++i) {
+      v[i] = WS[i] * 100 + get_random(100);
     }
-    if (false) toDisplay();
-    if (rev) reverse();
+    sort(words.begin(), words.end(),
+         [&](Word& a, Word& b) { return v[a.id] > v[b.id]; });
+  }
+
+  inline void solve(int minh, int minw) {
+    int maxh = min(minh + 10, H);
+    int maxw = min(minw + 10, W);
+    for (Word& t : words) {
+      if (t.used && minh <= t.h && t.h < maxh && minw <= t.w && t.w < maxw)
+        remove(t);
+    }
+    for (Word& t : words) {
+      [&]() {
+        for (int i = minh; i < maxh; ++i) {
+          for (int j = minw; j < maxw; ++j) {
+            if (can(i, j, false, t)) {
+              put(i, j, false, t);
+              return;
+            }
+          }
+        }
+        for (int i = minh; i < maxh; ++i) {
+          for (int j = minw; j < maxw; ++j) {
+            if (can(i, j, true, t)) {
+              put(i, j, true, t);
+              return;
+            }
+          }
+        }
+      }();
+    }
+  }
+
+  inline void update() {
+    if (bestScore < score) {
+      bestScore = score;
+      memcpy(result, X, sizeof(X));
+    }
   }
 
   inline void toDisplay() {
@@ -333,10 +343,28 @@ struct State {
 };
 State cur;
 
+void solve(bool rev) {
+  Timer timer;
+  if (rev) cur.reverse();
+  cur.init();
+  while (timer.getElapsed() * 2 < TIME_LIMIT) {
+    cur.words_shuffle();
+    for (int h = 0; h + 5 < H; h += 5) {
+      for (int w = 0; w + 5 < W; w += 5) {
+        State tmp = cur;
+        tmp.solve(h, w);
+        if (cur.score <= tmp.score) cur = tmp;
+      }
+    }
+  }
+  cur.update();
+  if (false) cur.toDisplay();
+  if (rev) cur.reverse();
+}
+
 class CrosswordPuzzler {
  public:
   vector<string> createPuzzle(int W, int H, vector<string> dict) {
-    Timer timer;
     {  // input
       ::W = W;
       ::H = H;
@@ -351,8 +379,8 @@ class CrosswordPuzzler {
       }
     }
     {  // solve
-      cur.solve(false);
-      cur.solve(true);
+      solve(false);
+      solve(true);
     }
     {  // output
       vector<string> ret;

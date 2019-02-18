@@ -40,7 +40,7 @@ def worker():
             print("seed {} : {}".format(seed, err))
             os._exit(1)
 
-num_worker_threads = 1
+num_worker_threads = 4
 threads = []
 for i in range(num_worker_threads):
     t = threading.Thread(target=worker)
