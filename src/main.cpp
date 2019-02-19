@@ -1,4 +1,3 @@
-#pragma GCC optimize "O3"
 #include <bits/stdc++.h>
 #include <sys/time.h>
 using namespace std;
@@ -323,12 +322,8 @@ void solve(bool rev) {
   if (rev) reverse();
   cur.setTemp();
   int count[13];
-  for (int i = 0; i < 13; ++i) {
-    count[i] = sids[i].size();
-  }
-  for (t4 t : temp) {
-    count[get<3>(t)]--;
-  }
+  for (int i = 0; i < 13; ++i) count[i] = sids[i].size();
+  for (t4 t : temp) count[get<3>(t)]--;
   for (int id : ids) {
     if (count[WS[id]] == 0) continue;
     if (timer.getElapsed() > TIME_LIMIT) break;
