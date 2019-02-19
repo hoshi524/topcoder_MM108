@@ -148,13 +148,9 @@ struct State {
   bool WD[SS];
   bool used[SS];
 
-  inline void init() {
-    score = 0;
+  inline void setTemp() {
     memset(X, 0, sizeof(X));
     memset(used, 0, sizeof(used));
-  }
-
-  inline void setTemp() {
     temp.clear();
     memset(edge, 1, sizeof(edge));
     for (int id : ids) {
@@ -183,6 +179,13 @@ struct State {
           }
         }
       }();
+    }
+    score = 0;
+    memset(used, 0, sizeof(used));
+    for (int i = 0; i < H; ++i) {
+      for (int j = 0; j < W; ++j) {
+        if (X[i][j] < EMP) X[i][j] = 0;
+      }
     }
   }
 
@@ -254,10 +257,6 @@ struct State {
       if (in(i, j)) edge[i][j][k] = false;
     };
     if (h) {
-      off(i, j - 1, 0);
-      off(i, j - 1, 1);
-      off(i, j + s, 0);
-      off(i, j + s, 1);
       for (int k = 0; k < s; ++k) {
         off(i - 1, j + k, 1);
         off(i + 0, j + k, 1);
@@ -265,10 +264,6 @@ struct State {
         off(i + 1, j + k, 0);
       }
     } else {
-      off(i - 1, j, 0);
-      off(i - 1, j, 1);
-      off(i + s, j, 0);
-      off(i + s, j, 1);
       for (int k = 0; k < s; ++k) {
         off(i + k, j - 1, 0);
         off(i + k, j + 0, 0);
@@ -366,9 +361,7 @@ void solve(bool rev) {
     sort(ids.begin(), ids.end(), [&](int a, int b) { return v[a] > v[b]; });
   }
   if (rev) reverse();
-  cur.init();
   cur.setTemp();
-  cur.init();
   int count[13];
   for (int i = 0; i < 13; ++i) {
     count[i] = sids[i].size();
