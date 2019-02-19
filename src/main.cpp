@@ -99,7 +99,7 @@ using ll = long long;
 #if defined(LOCAL)
 constexpr double TIME_LIMIT = 3;
 #else
-constexpr double TIME_LIMIT = 9;
+constexpr double TIME_LIMIT = 9.5;
 #endif
 constexpr int SIZE = 50;
 constexpr int SS = SIZE * SIZE;
@@ -123,15 +123,8 @@ constexpr int scores[13] = {
 int W, H, S;
 int WS[SS];
 char WC[SS][12];
-ll HASH[SS];
 int bestScore = 0;
 char result[SIZE][SIZE];
-
-string toBit(ll x) {
-  string s(64, '0');
-  for (int i = 0; i < 64; ++i) s[i] = (x >> i) & 1;
-  return s;
-}
 
 char toChar(char c) { return c ? c + 'A' - 1 : ' '; }
 
@@ -297,13 +290,6 @@ struct State {
     return true;
   }
 
-  inline bool can(ll h, ll m, int id) {
-    int s = WS[id];
-    ll x = h ^ (HASH[id] & m);
-    if (s < 12) x &= (1LL << ((s + 1) * 5)) - 1;
-    return x == 0;
-  }
-
   inline void update() {
     if (bestScore < score) {
       bestScore = score;
@@ -387,7 +373,6 @@ class CrosswordPuzzler {
         sids[WS[i]].emplace_back(i);
         for (int j = 0; j < WS[i]; ++j) {
           WC[i][j] = dict[i][j] - 'A' + 1;
-          HASH[i] |= ll(WC[i][j]) << (j * 5);
         }
       }
     }
