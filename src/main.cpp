@@ -97,7 +97,7 @@ inline double get_random_log() { return log(get_random_double()); }
 
 using ll = long long;
 #if defined(LOCAL)
-constexpr double TIME_LIMIT = 5;
+constexpr double TIME_LIMIT = 3;
 #else
 constexpr double TIME_LIMIT = 9;
 #endif
@@ -355,8 +355,16 @@ inline void reverse() {
   swap(H, W);
 }
 
+Timer timer;
+
 void solve(bool rev) {
-  Timer timer;
+  {
+    int v[SS];
+    for (int id : ids) {
+      v[id] = WS[id] * 100 + get_random(100);
+    }
+    sort(ids.begin(), ids.end(), [&](int a, int b) { return v[a] > v[b]; });
+  }
   if (rev) reverse();
   cur.init();
   cur.setTemp();
@@ -415,11 +423,11 @@ class CrosswordPuzzler {
           HASH[i] |= ll(WC[i][j]) << (j * 5);
         }
       }
-      sort(ids.begin(), ids.end(), [&](int a, int b) { return WS[a] > WS[b]; });
     }
     {  // solve
-      solve(false);
-      // solve(true);
+      for (int i = 0; timer.getElapsed() < TIME_LIMIT; i = 1 - i) {
+        solve(i);
+      }
     }
     {  // output
       vector<string> ret;
