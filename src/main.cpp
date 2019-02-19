@@ -290,23 +290,32 @@ struct State {
   }
 
   inline void solve(int minh, int minw, int maxh, int maxw) {
+    set<int> id;
     for (Word& t : words) {
-      if (t.used && minh <= t.h && t.h < maxh && minw <= t.w && t.w < maxw)
+      if (t.used && minh <= t.h && t.h < maxh && minw <= t.w && t.w < maxw) {
         remove(t);
+        id.insert(t.id);
+      }
     }
     for (Word& t : words) {
       if (t.used) continue;
+      int is, js, ie, je;
+      if (id.count(t.id)) {
+        is = 0, js = 0, ie = H, je = W;
+      } else {
+        is = minh, js = minw, ie = maxh, je = maxw;
+      }
       [&]() {
-        for (int i = minh; i < maxh; ++i) {
-          for (int j = minw; j < maxw; ++j) {
+        for (int i = is; i < ie; ++i) {
+          for (int j = js; j < je; ++j) {
             if (can(i, j, false, t)) {
               put(i, j, false, t);
               return;
             }
           }
         }
-        for (int i = minh; i < maxh; ++i) {
-          for (int j = minw; j < maxw; ++j) {
+        for (int i = is; i < ie; ++i) {
+          for (int j = js; j < je; ++j) {
             if (can(i, j, true, t)) {
               put(i, j, true, t);
               return;
