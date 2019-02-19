@@ -314,8 +314,8 @@ struct State {
             }
           }
         }
-        for (int i = is; i < ie; ++i) {
-          for (int j = js; j < je; ++j) {
+        for (int j = js; j < je; ++j) {
+          for (int i = is; i < ie; ++i) {
             if (can(i, j, true, t)) {
               put(i, j, true, t);
               return;
