@@ -104,6 +104,7 @@ constexpr double TIME_LIMIT = 9;
 constexpr int SIZE = 50;
 constexpr int SS = SIZE * SIZE;
 constexpr char EMP = 0x1f;
+constexpr char JK = EMP - 1;
 constexpr int scores[13] = {
     0,   // 0
     1,   // 1
@@ -138,7 +139,6 @@ vector<int> ids;
 vector<int> sids[13];
 using t4 = tuple<int, int, bool, int>;
 vector<t4> temp;
-bool edge[SIZE][SIZE][2];
 
 struct State {
   int score = 0;
@@ -152,7 +152,6 @@ struct State {
     memset(X, 0, sizeof(X));
     memset(used, 0, sizeof(used));
     temp.clear();
-    memset(edge, 1, sizeof(edge));
     for (int id : ids) {
       if (used[id]) continue;
       int s = WS[id];
@@ -162,7 +161,6 @@ struct State {
           for (int j = 0; j < W; ++j) {
             if (can_(i, j, false, id)) {
               put(i, j, false, id);
-              off(i, j, false, id);
               temp.emplace_back(i, j, false, s);
               return;
             }
@@ -172,7 +170,6 @@ struct State {
           for (int i = 0; i < H; ++i) {
             if (can_(i, j, true, id)) {
               put(i, j, true, id);
-              off(i, j, true, id);
               temp.emplace_back(i, j, true, s);
               return;
             }
@@ -184,7 +181,8 @@ struct State {
     memset(used, 0, sizeof(used));
     for (int i = 0; i < H; ++i) {
       for (int j = 0; j < W; ++j) {
-        if (X[i][j] < EMP) X[i][j] = 0;
+        if (X[i][j] == 0) continue;
+        if (X[i][j] < EMP) X[i][j] = JK;
       }
     }
   }
@@ -216,9 +214,7 @@ struct State {
   }
 
   inline void put(int i, int j, char c) {
-    if (in(i, j)) {
-      X[i][j] = c;
-    }
+    if (in(i, j)) X[i][j] = c;
   }
 
   inline char getC(int i, int j) { return in(i, j) ? X[i][j] : 0; }
@@ -251,28 +247,6 @@ struct State {
     used[id] = true;
   }
 
-  void off(int i, int j, bool h, int id) {
-    int s = WS[id];
-    auto off = [&](int i, int j, int k) {
-      if (in(i, j)) edge[i][j][k] = false;
-    };
-    if (h) {
-      for (int k = 0; k < s; ++k) {
-        off(i - 1, j + k, 1);
-        off(i + 0, j + k, 1);
-        off(i + 1, j + k, 1);
-        off(i + 1, j + k, 0);
-      }
-    } else {
-      for (int k = 0; k < s; ++k) {
-        off(i + k, j - 1, 0);
-        off(i + k, j + 0, 0);
-        off(i + k, j + 1, 0);
-        off(i + k, j + 1, 1);
-      }
-    }
-  }
-
   bool can(int i, int j, bool h, int id) {
     if (used[id]) return false;
     int s = WS[id];
@@ -282,7 +256,7 @@ struct State {
       if (IN(i, j + s)) return false;
       for (int k = 0; k < s; ++k) {
         char c = X[i][j + k];
-        if (c && c != WC[id][k]) return false;
+        if (c && c != JK && c != WC[id][k]) return false;
         if (c == 0 && (IN(i - 1, j + k) || IN(i + 1, j + k))) return false;
       }
     } else {
@@ -291,7 +265,7 @@ struct State {
       if (IN(i + s, j)) return false;
       for (int k = 0; k < s; ++k) {
         char c = X[i + k][j];
-        if (c && c != WC[id][k]) return false;
+        if (c && c != JK && c != WC[id][k]) return false;
         if (c == 0 && (IN(i + k, j - 1) || IN(i + k, j + 1))) return false;
       }
     }
@@ -375,7 +349,7 @@ void solve(bool rev) {
     [&]() {
       for (int i = 0; i < H; ++i) {
         for (int j = 0; j < W; ++j) {
-          if (edge[i][j][1] && cur.can(i, j, true, id)) {
+          if (cur.can(i, j, true, id)) {
             State tmp = cur;
             tmp.put(i, j, true, id);
             if (tmp.applyTemp()) {
@@ -384,7 +358,7 @@ void solve(bool rev) {
               return;
             }
           }
-          if (edge[i][j][0] && cur.can(i, j, false, id)) {
+          if (cur.can(i, j, false, id)) {
             State tmp = cur;
             tmp.put(i, j, false, id);
             if (tmp.applyTemp()) {
@@ -428,7 +402,7 @@ class CrosswordPuzzler {
         ret.emplace_back(string(W, '-'));
         for (int j = 0; j < W; ++j) {
           char c = result[i][j];
-          if (c && c != EMP) ret[i][j] = c + 'A' - 1;
+          if (c && c < JK) ret[i][j] = c + 'A' - 1;
         }
         // debug(ret[i]);
       }
