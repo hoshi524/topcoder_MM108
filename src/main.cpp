@@ -355,13 +355,11 @@ void solve(bool rev) {
       for (int w = 0; w + 5 < W; w += 5) {
         State tmp = cur;
         tmp.solve(h, w, min(h + 10, H), min(w + 10, W));
-        if (tmp.score - cur.score > remain * get_random_log()) {
-          cur = tmp;
-          cur.update();
-        }
+        if (cur.score <= tmp.score) cur = tmp;
       }
     }
   }
+  cur.update();
   if (false) cur.toDisplay();
   if (rev) cur.reverse();
 }
