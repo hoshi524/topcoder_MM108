@@ -152,6 +152,7 @@ struct State {
     memset(X, 0, sizeof(X));
     memset(C, 0, sizeof(C));
     for (auto& t : words) t.used = false;
+    solve(0, 0, H, W);
   }
 
   inline void reverse() {
@@ -288,9 +289,7 @@ struct State {
          [&](const Word& a, const Word& b) { return v[a.id] > v[b.id]; });
   }
 
-  inline void solve(int minh, int minw) {
-    int maxh = min(minh + 10, H);
-    int maxw = min(minw + 10, W);
+  inline void solve(int minh, int minw, int maxh, int maxw) {
     for (Word& t : words) {
       if (t.used && minh <= t.h && t.h < maxh && minw <= t.w && t.w < maxw)
         remove(t);
@@ -355,12 +354,14 @@ void solve(bool rev) {
     for (int h = 0; h + 5 < H; h += 5) {
       for (int w = 0; w + 5 < W; w += 5) {
         State tmp = cur;
-        tmp.solve(h, w);
-        if (tmp.score - cur.score > remain * get_random_log()) cur = tmp;
+        tmp.solve(h, w, min(h + 10, H), min(w + 10, W));
+        if (tmp.score - cur.score > remain * get_random_log()) {
+          cur = tmp;
+          cur.update();
+        }
       }
     }
   }
-  cur.update();
   if (false) cur.toDisplay();
   if (rev) cur.reverse();
 }
