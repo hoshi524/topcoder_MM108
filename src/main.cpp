@@ -135,9 +135,6 @@ vector<t4> temp;
 struct State {
   int score = 0;
   char X[SIZE][SIZE];
-  uint8_t WH[SS];
-  uint8_t WW[SS];
-  bool WD[SS];
   bool used[SS];
 
   inline void setTemp() {
@@ -219,9 +216,6 @@ struct State {
   void put(int i, int j, bool h, int id) {
     assert(!used[id]);
     int s = WS[id];
-    WH[id] = i;
-    WW[id] = j;
-    WD[id] = h;
     if (h) {
       put(i, j - 1, EMP);
       put(i, j + s, EMP);
